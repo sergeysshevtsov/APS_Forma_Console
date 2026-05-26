@@ -1,7 +1,7 @@
 ﻿using APS_Forma_Console.Enums;
 
 namespace APS_Forma_Console.Utils;
-internal static class Common
+internal static class ConsoleExtension
 {
     public static void ConsoleWriteLine(string text, ConsoleTextType consoleTextType = ConsoleTextType.None)
     {

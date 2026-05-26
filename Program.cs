@@ -1,9 +1,11 @@
-﻿using APS_Forma_Console.Auth;
+﻿using APS_Forma_Console.APS;
+using APS_Forma_Console.Auth;
+using APS_Forma_Console.Cache;
 using APS_Forma_Console.Config;
 using APS_Forma_Console.Enums;
+using APS_Forma_Console.Navigation;
 using APS_Forma_Console.Utils;
 using Microsoft.Extensions.Configuration;
-using System.Threading.Tasks;
 
 internal class Program
 {
@@ -24,6 +26,11 @@ internal class Program
 
         AuthService auth = new(config);
         await auth.Login();
+        if (string.IsNullOrEmpty(auth.GetToken()))
+            throw new InvalidOperationException("APS token is empty.");
+
+        MenuRenderer menu = new(new CacheService(), new DataManagementService(auth));
+        await menu.MainMenu();
 
         Console.WriteLine();
         Console.WriteLine("Press any key to exit...");
@@ -35,17 +42,17 @@ internal class Program
         if (string.IsNullOrWhiteSpace(config.ClientId))
             throw new InvalidOperationException("APS:ClientId is missing.");
         else
-            Common.ConsoleWriteLine(string.Concat("ClientId: ", config.ClientId.MaskString(2)), ConsoleTextType.Success);
+            ConsoleExtension.ConsoleWriteLine(string.Concat("ClientId: ", config.ClientId.MaskString(2)), ConsoleTextType.Success);
 
         if (string.IsNullOrWhiteSpace(config.ClientSecret))
             throw new InvalidOperationException("APS:ClientSecret is missing.");
         else
-            Common.ConsoleWriteLine(string.Concat("ClientSecret: ", config.ClientSecret.MaskString(2)), ConsoleTextType.Success);
+            ConsoleExtension.ConsoleWriteLine(string.Concat("ClientSecret: ", config.ClientSecret.MaskString(2)), ConsoleTextType.Success);
 
         if (string.IsNullOrWhiteSpace(config.CallbackUrl))
             throw new InvalidOperationException("APS:CallbackUrl is missing.");
         else
-            Common.ConsoleWriteLine($"Callback URL: {config.CallbackUrl}", ConsoleTextType.Success);
+            ConsoleExtension.ConsoleWriteLine($"Callback URL: {config.CallbackUrl}", ConsoleTextType.Success);
 
         if (config.Scopes is null || config.Scopes.Count == 0)
             throw new InvalidOperationException("APS scopes are missing.");

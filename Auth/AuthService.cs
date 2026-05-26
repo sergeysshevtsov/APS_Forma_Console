@@ -9,16 +9,20 @@ internal class AuthService
 {
     private readonly APSConfig config;
     private readonly HttpClient httpClient;
+    private string? accessToken;
 
     public AuthService(APSConfig config)
     {
         this.config = config;
-        this.httpClient = ConfigHttpClient(new() { BaseAddress = new Uri("https://developer.api.autodesk.com/") });
+        this.httpClient = new() { BaseAddress = new Uri("https://developer.api.autodesk.com/") };
+        httpClient.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Basic", $"{config.ClientId}:{config.ClientSecret}".ToBase64Url());
+        httpClient.DefaultRequestHeaders.Add("x-ads-region", config.Region);
     }
 
-    public async Task<string?> Login()
+    public async Task Login()
     {
-        Common.ConsoleWriteLine("Logging in...");
+        ConsoleExtension.ConsoleWriteLine("Logging in...");
         KeyValuePair<string, string>[] form =
         [
             new KeyValuePair<string, string>("grant_type", "client_credentials"),
@@ -35,19 +39,14 @@ internal class AuthService
         Token? token = JsonSerializer.Deserialize<Token>(body);
         string accessToken = token?.access_token ?? string.Empty;
         if (string.IsNullOrEmpty(accessToken))
-            return null;
-        
-        Common.ConsoleWriteLine($"access_token:{token?.access_token}", ConsoleTextType.Success);
-        Common.ConsoleWriteLine($"token_type: {token?.token_type}", ConsoleTextType.Success);
-        Common.ConsoleWriteLine($"expires_in: {token?.expires_in}", ConsoleTextType.Success);
-        return accessToken;
+            return;
+
+        ConsoleExtension.ConsoleWriteLine($"access_token: {token?.access_token}", ConsoleTextType.Success);
+        ConsoleExtension.ConsoleWriteLine($"token_type: {token?.token_type}", ConsoleTextType.Success);
+        ConsoleExtension.ConsoleWriteLine($"expires_in: {token?.expires_in}", ConsoleTextType.Success);
+
+        this.accessToken = accessToken;
     }
 
-    private HttpClient ConfigHttpClient(HttpClient httpClient)
-    {
-        httpClient.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Basic", $"{config.ClientId}:{config.ClientSecret}".ToBase64Url());
-        httpClient.DefaultRequestHeaders.Add("x-ads-region", config.Region);
-        return httpClient;
-    }
+    public string? GetToken() => accessToken;
 }
