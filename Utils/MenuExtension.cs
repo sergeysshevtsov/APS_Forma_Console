@@ -30,7 +30,7 @@ internal class MenuExtension
         if (showBack) items.Add("Back");
         for (int i = 0; i < items.Count; i++)
             Console.WriteLine($"{i + 1}. {items[i]}");
-        if (showBack)
+        if (showExit)
             Console.WriteLine("0. Exit");
 
         return ReadSelection(0, items.Count);

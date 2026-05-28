@@ -32,7 +32,7 @@ internal class MenuRenderer
         if (selectedFileCacheInfo == null)
         {
             MenuExtension.MenuHeader("No selected file");
-            await RunItemSelection(MenuExtension.MenuItemsRender([menuItems[0]], false));
+            await RunItemSelection(MenuExtension.MenuItemsRender([menuItems[0]], false, true));
         }
         else
         {
@@ -40,13 +40,6 @@ internal class MenuRenderer
             ConsoleExtension.ConsoleWriteLine(selectedFileCacheInfo?.ProjectName, Enums.ConsoleTextType.Info);
             ConsoleExtension.ConsoleWriteLine(selectedFileCacheInfo?.FolderName, Enums.ConsoleTextType.Info);
             ConsoleExtension.ConsoleWriteLine(selectedFileCacheInfo?.ItemName, Enums.ConsoleTextType.Info);
-
-            Console.WriteLine("1. Select another Revit file from Forma");
-            Console.WriteLine("2. ");
-            Console.WriteLine("3. ");
-            Console.WriteLine("4. ");
-            Console.WriteLine("5. ");
-            Console.WriteLine("0. Exit");
         }
     }
 
@@ -58,6 +51,8 @@ internal class MenuRenderer
                 Console.Clear();
                 SelectRevitFile selectRevitFile = new(this, cacheService, dataManagementService);
                 await selectRevitFile.Start();
+                break;
+            case 0:
                 break;
         }
     }
