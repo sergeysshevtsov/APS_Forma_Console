@@ -68,6 +68,18 @@ internal static class JsonExtensions
         return "(unnamed)";
     }
 
+    public static string GetDerivativeUrn(JsonElement version)
+    {
+        if (version.TryGetProperty("relationships", out var relationships) &&
+            relationships.TryGetProperty("derivatives", out var derivatives) &&
+            derivatives.TryGetProperty("data", out var data) &&
+            data.TryGetProperty("id", out var id))
+            return id.GetString()
+                ?? throw new InvalidOperationException("Derivative URN is empty.");
+
+        throw new InvalidOperationException("Selected file version does not contain a derivative URN. It may not be translated yet.");
+    }
+
     private static List<T> ReadNamedResources<T>(JsonDocument json, Func<string, string, T> factory)
     {
         List<T> result = [];

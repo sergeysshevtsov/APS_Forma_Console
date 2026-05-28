@@ -1,4 +1,5 @@
 ﻿using APS_Forma_Console.APS;
+using APS_Forma_Console.Cache;
 using APS_Forma_Console.Models;
 using APS_Forma_Console.Navigation;
 using APS_Forma_Console.Utils;
@@ -7,11 +8,15 @@ using System.Text.Json;
 namespace APS_Forma_Console.Items;
 internal class SelectRevitFile
 {
+    private readonly MenuRenderer menuRenderer;
+    private readonly CacheService cacheService;
     private readonly DataManagementService dataManagementService;
     private SelectedFileCacheInfo selectedFileCacheInfo;
 
-    public SelectRevitFile(DataManagementService dataManagementService)
+    public SelectRevitFile(MenuRenderer menuRenderer, CacheService cacheService, DataManagementService dataManagementService)
     {
+        this.menuRenderer = menuRenderer;
+        this.cacheService = cacheService;
         this.dataManagementService = dataManagementService;
         this.selectedFileCacheInfo = new();
     }
@@ -37,8 +42,8 @@ internal class SelectRevitFile
             Console.WriteLine("No projects found in this hub.");
             return;
         }
-        RenderProjects(projects);
-        ProjectInfo project = projects[MenuExtension.ReadSelection(1, projects.Count) - 1];
+        
+        ProjectInfo project = projects[RenderProjects(projects) - 1];
         selectedFileCacheInfo.ProjectId = project.Id;
         selectedFileCacheInfo.ProjectName = project.Name;
 
@@ -51,13 +56,14 @@ internal class SelectRevitFile
             Console.WriteLine("No top folders found in this project.");
             return;
         }
-        RenderFolderEntries(topFolders, false);
+        RenderFolderEntries(selectedFileCacheInfo.ProjectName, topFolders);
         FolderEntry folder = topFolders[MenuExtension.ReadSelection(1, topFolders.Count) - 1];
         selectedFileCacheInfo.FolderId = folder.Id;
         selectedFileCacheInfo.FolderName = folder.Name;
 
-        //navigator.SetRootFolder(rootFolder);
-        await BrowseCurrentFolderc(project.Id);
+        ConsoleNavigator navigator = new();
+        navigator.SetRootFolder(folder);
+        await BrowseCurrentFolder(project.Id, navigator);
     }
 
     public static int RenderHubs(IReadOnlyList<HubInfo> hubs)
@@ -66,15 +72,15 @@ internal class SelectRevitFile
         return MenuExtension.MenuItemsRender([.. hubs.Select(h => h.Name)]);
     }
 
-    public static void RenderProjects(IReadOnlyList<ProjectInfo> projects)
+    public int RenderProjects(IReadOnlyList<ProjectInfo> projects)
     {
-        MenuExtension.MenuHeader("Available projects");
-        MenuExtension.MenuItemsRender([.. projects.Select(h => h.Name)]);
+        MenuExtension.MenuHeader(selectedFileCacheInfo.HubName);
+        return MenuExtension.MenuItemsRender([.. projects.Select(h => h.Name)]);
     }
 
-    public static void RenderFolderEntries(IReadOnlyList<FolderEntry> entries, bool canGoBack)
+    public void RenderFolderEntries(string folderName, IReadOnlyList<FolderEntry> entries, bool canGoBack = false)
     {
-        MenuExtension.MenuHeader("Folder contents");
+        MenuExtension.MenuHeader(folderName);
         for (var i = 0; i < entries.Count; i++)
         {
             var prefix = entries[i].Kind == FolderEntryKind.Folder ? "[Folder]" : "[File]";
@@ -85,13 +91,13 @@ internal class SelectRevitFile
             Console.WriteLine($"{entries.Count + 1}. Back");
     }
 
-    private async Task BrowseCurrentFolderc(string projectId)
+    private async Task BrowseCurrentFolder(string projectId, ConsoleNavigator navigator)
     {
         while (navigator.CurrentFolder is not null)
         {
-            using var contentsJson = await dataClient.GetFolderContents(projectId, navigator.CurrentFolder.Id);
+            using JsonDocument contentsJson = await dataManagementService.GetFolderContents(projectId, navigator.CurrentFolder.Id);
             List<FolderEntry> entries = JsonExtensions.ReadFolderEntries(contentsJson, projectId);
-            int maxSelection = entries.Count + (navigator.CanGoBack ? 1 : 0);
+            int maxSelection = entries.Count /*+ (navigator.CanGoBack ? 1 : 0)*/;
 
             if (maxSelection == 0)
             {
@@ -99,8 +105,8 @@ internal class SelectRevitFile
                 return;
             }
 
-            MenuRenderer.RenderFolderEntries(entries, navigator.CanGoBack);
-            int selection = SelectionReader.ReadSelection(1, maxSelection);
+            RenderFolderEntries(selectedFileCacheInfo.FolderName, entries);
+            int selection = MenuExtension.ReadSelection(1, maxSelection);
             if (navigator.CanGoBack && selection == entries.Count + 1)
             {
                 navigator.Back();
@@ -111,6 +117,8 @@ internal class SelectRevitFile
             if (selected.Kind == FolderEntryKind.Folder)
             {
                 navigator.EnterFolder(selected);
+                selectedFileCacheInfo.FolderId = selected.Id;
+                selectedFileCacheInfo.FolderName += string.Concat("/", selected.Name);
                 continue;
             }
 
@@ -120,7 +128,25 @@ internal class SelectRevitFile
                 continue;
             }
 
-            await OpenRevitFile(projectId, selected);
+            await Select(projectId, selected);
         }
+    }
+
+    private async Task Select(string projectId, FolderEntry selectedItem)
+    {
+        var latestVersion = await dataManagementService.GetLatestVersion(projectId, selectedItem.Id);
+        var derivativeUrn = JsonExtensions.GetDerivativeUrn(latestVersion);
+
+        MenuExtension.MenuHeader("Selected Revit file");
+        ConsoleExtension.ConsoleWriteLine($"Name: {selectedItem.Name}", Enums.ConsoleTextType.Info);
+        ConsoleExtension.ConsoleWriteLine($"Item ID: {selectedItem.Id}", Enums.ConsoleTextType.Info);
+        ConsoleExtension.ConsoleWriteLine($"Version ID: {latestVersion.GetProperty("id").GetString()}", Enums.ConsoleTextType.Info);
+        ConsoleExtension.ConsoleWriteLine($"Derivative URN: {derivativeUrn}", Enums.ConsoleTextType.Info);
+
+        selectedFileCacheInfo.ItemId = selectedItem.Id;
+        selectedFileCacheInfo.ItemName = selectedItem.Name;
+
+        cacheService.WriteCacheFile(selectedFileCacheInfo);
+        await menuRenderer.MainMenu();
     }
 }

@@ -56,7 +56,7 @@ internal class MenuRenderer
         {
             case 1:
                 Console.Clear();
-                SelectRevitFile selectRevitFile = new(dataManagementService);
+                SelectRevitFile selectRevitFile = new(this, cacheService, dataManagementService);
                 await selectRevitFile.Start();
                 break;
         }

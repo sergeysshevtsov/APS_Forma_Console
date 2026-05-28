@@ -14,6 +14,8 @@ internal class CacheService
         if (!Directory.Exists(userDirectory))
             Directory.CreateDirectory(userDirectory);
         cacheFilePath = Path.Combine(userDirectory, "cache.json");
+        if (!File.Exists(cacheFilePath))
+            File.Create(cacheFilePath);
     }
 
     public SelectedFileCacheInfo? CacheFileCheck()
@@ -21,6 +23,18 @@ internal class CacheService
         if (!File.Exists(cacheFilePath))
             return null;
 
-        return JsonSerializer.Deserialize<SelectedFileCacheInfo>(cacheFilePath);
+        SelectedFileCacheInfo? selectedFileCacheInfo = null;
+        try
+        {
+            string json = File.ReadAllText(cacheFilePath);
+            selectedFileCacheInfo = JsonSerializer.Deserialize<SelectedFileCacheInfo>(json);
+        }
+        catch { }
+        return selectedFileCacheInfo;
     }
+
+    public void WriteCacheFile(SelectedFileCacheInfo selectedFileCacheInfo) =>
+        File.WriteAllText(cacheFilePath, JsonSerializer.Serialize(selectedFileCacheInfo));
+    
+    
 }
