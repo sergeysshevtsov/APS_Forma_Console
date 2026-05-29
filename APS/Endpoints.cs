@@ -17,4 +17,7 @@ internal class Endpoints
         $"https://developer.api.autodesk.com/data/v1/projects/{Escape(projectId)}/items/{Escape(itemId)}/versions";
 
     private static string Escape(string value) => Uri.EscapeDataString(value);
+
+    public static string Manifest(string urn) =>
+        $"https://developer.api.autodesk.com/modelderivative/v2/designdata/{urn}/manifest";
 }

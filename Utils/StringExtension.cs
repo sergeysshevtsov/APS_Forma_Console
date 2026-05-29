@@ -8,4 +8,10 @@ internal static class StringExtension
 
     public static string ToBase64Url(this string value) => 
         Convert.ToBase64String(Encoding.UTF8.GetBytes(value));
+
+    public static string ToBase64Url(this string value, bool extended = true) =>
+        Convert.ToBase64String(Encoding.UTF8.GetBytes(value))
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
 }

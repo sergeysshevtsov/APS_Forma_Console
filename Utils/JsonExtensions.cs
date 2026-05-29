@@ -1,4 +1,7 @@
-﻿using APS_Forma_Console.Models;
+﻿using APS_Forma_Console.APS;
+using APS_Forma_Console.Auth;
+using APS_Forma_Console.Models;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -68,6 +71,7 @@ internal static class JsonExtensions
         return "(unnamed)";
     }
 
+
     public static string GetDerivativeUrn(JsonElement version)
     {
         if (version.TryGetProperty("relationships", out var relationships) &&
@@ -93,4 +97,54 @@ internal static class JsonExtensions
 
         return result;
     }
+
+    public static async Task<JsonDocument> GetJson(this AuthService authService, string url)
+    {
+        using HttpClient httpClient = new();
+        using HttpRequestMessage request = new(HttpMethod.Get, url);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", authService.GetToken());
+
+        using HttpResponseMessage response = await httpClient.SendAsync(request);
+        string body = await response.Content.ReadAsStringAsync();
+
+        if (!response.IsSuccessStatusCode)
+            throw new InvalidOperationException(
+                $"GET failed: {(int)response.StatusCode} {url}{Environment.NewLine}{body}");
+
+        return JsonDocument.Parse(body);
+    }
+
+    public static string? FindPropertyRecursive(JsonElement element, string propertyName)
+    {
+        switch (element.ValueKind)
+        {
+            case JsonValueKind.Object:
+                foreach (JsonProperty property in element.EnumerateObject())
+                {
+                    if (string.Equals(property.Name, propertyName, StringComparison.OrdinalIgnoreCase))
+                        return property.Value.ValueKind == JsonValueKind.String
+                            ? property.Value.GetString()
+                            : property.Value.ToString();
+
+                    string? nestedProperty = FindPropertyRecursive(property.Value, propertyName);
+                    if (!string.IsNullOrEmpty(nestedProperty))
+                        return nestedProperty;
+                }
+                break;
+            case JsonValueKind.Array:
+                foreach (JsonElement item in element.EnumerateArray())
+                {
+                    string? nestedProperty = FindPropertyRecursive(item, propertyName);
+                    if (!string.IsNullOrEmpty(nestedProperty))
+                        return nestedProperty;
+                }
+                break;
+            default:
+                break;
+        }
+
+        return null;
+    }
+
+
 }

@@ -7,44 +7,42 @@ using APS_Forma_Console.Utils;
 using System.Text.Json;
 
 namespace APS_Forma_Console.Navigation;
-internal class MenuRenderer
+internal class MenuRenderer(CacheService cacheService, DataManagementService dataManagementService, ModelDerivativeService modelDerivativeService)
 {
-    private readonly CacheService cacheService;
-    private readonly DataManagementService dataManagementService;
-    private readonly List<string> menuItems;
-    private readonly string exit = "Exit";
+    SelectedFileCacheInfo? selectedFileCacheInfo = null;
 
-    public MenuRenderer(CacheService cacheService, DataManagementService dataManagementService)
-    {
-        this.cacheService = cacheService;
-        this.dataManagementService = dataManagementService;
-        menuItems = new List<string>() {
+    private readonly List<string> menuItems = [
             "Select Revit file from Forma",
-            "Check views",
+            "Show Revit file version",
             ""
-        };
-    }
+        ];
 
     public async Task MainMenu()
     {
-        SelectedFileCacheInfo? selectedFileCacheInfo = cacheService.CacheFileCheck();
-        int selectedItemNumber = -1;
-        if (selectedFileCacheInfo == null)
+        selectedFileCacheInfo = cacheService.GetCacheFile();
+        bool result = true;
+        while (result)
         {
-            MenuExtension.MenuHeader("No selected file");
-            await RunItemSelection(MenuExtension.MenuItemsRender([menuItems[0]], false, true));
-        }
-        else
-        {
-            MenuExtension.MenuHeader("Selected file Info");
-            ConsoleExtension.ConsoleWriteLine(selectedFileCacheInfo?.ProjectName, Enums.ConsoleTextType.Info);
-            ConsoleExtension.ConsoleWriteLine(selectedFileCacheInfo?.FolderName, Enums.ConsoleTextType.Info);
-            ConsoleExtension.ConsoleWriteLine(selectedFileCacheInfo?.ItemName, Enums.ConsoleTextType.Info);
+            if (selectedFileCacheInfo == null)
+            {
+                MenuExtension.MenuHeader("No selected file");
+                result = await RunItemSelection(MenuExtension.MenuItemsRender([menuItems[0]], false, true));
+            }
+            else
+            {
+                MenuExtension.MenuHeader("Selected file Info");
+                ConsoleExtension.ConsoleWriteLine(selectedFileCacheInfo?.ProjectName, Enums.ConsoleTextType.Info);
+                ConsoleExtension.ConsoleWriteLine(selectedFileCacheInfo?.FolderName, Enums.ConsoleTextType.Info);
+                ConsoleExtension.ConsoleWriteLine(selectedFileCacheInfo?.ItemName, Enums.ConsoleTextType.Info);
+
+                result = await RunItemSelection(MenuExtension.MenuItemsRender(menuItems, false, true));
+            }
         }
     }
 
-    private async Task RunItemSelection(int itemNumber) 
+    private async Task<bool> RunItemSelection(int itemNumber)
     {
+        bool selected = true;
         switch (itemNumber)
         {
             case 1:
@@ -52,8 +50,18 @@ internal class MenuRenderer
                 SelectRevitFile selectRevitFile = new(this, cacheService, dataManagementService);
                 await selectRevitFile.Start();
                 break;
+            case 2:
+                MenuExtension.MenuHeader("Revit file version");
+                JsonElement element = await dataManagementService.GetLatestVersion(selectedFileCacheInfo?.ProjectId, selectedFileCacheInfo?.ItemId);
+                string? derivativeUrn = JsonExtensions.GetDerivativeUrn(element);
+                string? version = await modelDerivativeService.GetRvtVersionFromManifest(derivativeUrn) ?? string.Empty;
+                ConsoleExtension.ConsoleWriteLine(version, Enums.ConsoleTextType.Success);
+                break;
             case 0:
+                selected = false;
                 break;
         }
+
+        return selected;
     }
 }

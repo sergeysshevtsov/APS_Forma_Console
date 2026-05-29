@@ -18,7 +18,7 @@ internal class CacheService
             File.Create(cacheFilePath);
     }
 
-    public SelectedFileCacheInfo? CacheFileCheck()
+    public SelectedFileCacheInfo? GetCacheFile()
     {
         if (!File.Exists(cacheFilePath))
             return null;

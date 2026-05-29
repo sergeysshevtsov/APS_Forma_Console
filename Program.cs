@@ -29,7 +29,11 @@ internal class Program
         if (string.IsNullOrEmpty(auth.GetToken()))
             throw new InvalidOperationException("APS token is empty.");
 
-        MenuRenderer menu = new(new CacheService(), new DataManagementService(auth));
+
+        MenuRenderer menu = new(
+            new CacheService(), 
+            new DataManagementService(auth), 
+            new ModelDerivativeService(auth));
         await menu.MainMenu();
 
         Console.WriteLine();
