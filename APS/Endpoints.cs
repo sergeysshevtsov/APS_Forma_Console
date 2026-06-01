@@ -1,7 +1,9 @@
-﻿namespace APS_Forma_Console.APS;
+﻿using System.Text.Json;
+
+namespace APS_Forma_Console.APS;
 internal class Endpoints
 {
-    public static string Hubs() => 
+    public static string Hubs() =>
         "https://developer.api.autodesk.com/project/v1/hubs";
 
     public static string Projects(string hubId) =>
@@ -20,4 +22,7 @@ internal class Endpoints
 
     public static string Manifest(string urn) =>
         $"https://developer.api.autodesk.com/modelderivative/v2/designdata/{urn}/manifest";
+
+    public static string Metadata(string urn) =>
+        $"https://developer.api.autodesk.com/modelderivative/v2/designdata/{urn}/metadata";
 }

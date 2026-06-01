@@ -14,7 +14,8 @@ internal class MenuRenderer(CacheService cacheService, DataManagementService dat
     private readonly List<string> menuItems = [
             "Select Revit file from Forma",
             "Show Revit file version",
-            ""
+            "Show model links",
+            "Show model views"
         ];
 
     public async Task MainMenu()
@@ -51,12 +52,35 @@ internal class MenuRenderer(CacheService cacheService, DataManagementService dat
                 await selectRevitFile.Start();
                 break;
             case 2:
-                MenuExtension.MenuHeader("Revit file version");
-                JsonElement element = await dataManagementService.GetLatestVersion(selectedFileCacheInfo?.ProjectId, selectedFileCacheInfo?.ItemId);
-                string? derivativeUrn = JsonExtensions.GetDerivativeUrn(element);
-                string? version = await modelDerivativeService.GetRvtVersionFromManifest(derivativeUrn) ?? string.Empty;
-                ConsoleExtension.ConsoleWriteLine(version, Enums.ConsoleTextType.Success);
+                {
+                    MenuExtension.MenuHeader("Revit file version");
+                    JsonElement element = await dataManagementService.GetLatestVersion(selectedFileCacheInfo?.ProjectId, selectedFileCacheInfo?.ItemId);
+                    string? derivativeUrn = JsonExtensions.GetDerivativeUrn(element);
+                    string? version = await modelDerivativeService.GetRevitVersionFromManifest(derivativeUrn) ?? string.Empty;
+                    ConsoleExtension.ConsoleWriteLine(version, Enums.ConsoleTextType.Success);
+                    break;
+                }
+            case 3:
                 break;
+            case 4:
+                {
+                    MenuExtension.MenuHeader("Model's view list");
+                    JsonElement element = await dataManagementService.GetLatestVersion(selectedFileCacheInfo?.ProjectId, selectedFileCacheInfo?.ItemId);
+                    string? derivativeUrn = JsonExtensions.GetDerivativeUrn(element);
+                    List<ViewInfo> views = await modelDerivativeService.GetModelViews(derivativeUrn);
+                    if (views.Count == 0)
+                        Console.WriteLine("No views found.");
+                    else
+                    {
+                        foreach (ViewInfo view in views)
+                        {
+                            Console.WriteLine($"- {view.Name}");
+                            Console.WriteLine($"  Guid: {view.Guid}");
+                            Console.WriteLine($"  Role: {view.Role}");
+                        }
+                    }
+                    break;
+                }
             case 0:
                 selected = false;
                 break;

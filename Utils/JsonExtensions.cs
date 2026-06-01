@@ -71,7 +71,6 @@ internal static class JsonExtensions
         return "(unnamed)";
     }
 
-
     public static string GetDerivativeUrn(JsonElement version)
     {
         if (version.TryGetProperty("relationships", out var relationships) &&
@@ -146,5 +145,19 @@ internal static class JsonExtensions
         return null;
     }
 
+    public static List<ViewInfo> ReadViews(JsonDocument metadata)
+    {
+        List<ViewInfo> views = [];
 
+        if (!metadata.RootElement.TryGetProperty("data", out var data) || !data.TryGetProperty("metadata", out var metadataArray))
+            return views;
+
+        foreach (var item in metadataArray.EnumerateArray())
+            views.Add(new ViewInfo(
+                item.GetProperty("guid").GetString() ?? "",
+                item.TryGetProperty("name", out var name) ? name.GetString() ?? "(unnamed)" : "(unnamed)",
+                item.TryGetProperty("role", out var role) ? role.GetString()?.ToUpper() ?? "" : ""));
+
+        return views;
+    }
 }
