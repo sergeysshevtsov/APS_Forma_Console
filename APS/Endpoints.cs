@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System;
+using System.Text.Json;
 
 namespace APS_Forma_Console.APS;
 internal class Endpoints
@@ -18,6 +19,9 @@ internal class Endpoints
     public static string ItemVersions(string projectId, string itemId) =>
         $"https://developer.api.autodesk.com/data/v1/projects/{Escape(projectId)}/items/{Escape(itemId)}/versions";
 
+    public static string ItemRefs(string projectId, string versionId) =>
+      $"https://developer.api.autodesk.com/data/v1/projects/{Escape(projectId)}/versions/{Escape(versionId)}/refs";
+
     private static string Escape(string value) => Uri.EscapeDataString(value);
 
     public static string Manifest(string urn) =>
@@ -25,4 +29,7 @@ internal class Endpoints
 
     public static string Metadata(string urn) =>
         $"https://developer.api.autodesk.com/modelderivative/v2/designdata/{urn}/metadata";
+
+    public static string PublishedVersion(string projectId, string encodedVersionId) =>
+        $"https://developer.api.autodesk.com/construction/rcm/v1/projects/{projectId}/published-versions/{encodedVersionId}/linked-files?includeHost=true";
 }

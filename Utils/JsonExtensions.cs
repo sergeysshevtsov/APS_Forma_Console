@@ -4,6 +4,7 @@ using APS_Forma_Console.Models;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Linq;
 
 namespace APS_Forma_Console.Utils;
 internal static class JsonExtensions
@@ -69,6 +70,15 @@ internal static class JsonExtensions
         }
 
         return "(unnamed)";
+    }
+
+    public static string GetVersionId(JsonElement version)
+    {
+        if (version.TryGetProperty("id", out var id))
+            return id.GetString()
+                ?? throw new InvalidOperationException("Id is empty.");
+
+        throw new InvalidOperationException("Selected file version does not contain a ID. It may not be translated yet.");
     }
 
     public static string GetDerivativeUrn(JsonElement version)
@@ -145,11 +155,46 @@ internal static class JsonExtensions
         return null;
     }
 
-    public static List<ViewInfo> ReadViews(JsonDocument metadata)
+    public static List<RevitLinkInfo> ReadLinks(JsonDocument document)
+    {
+        List<RevitLinkInfo> links = [];
+
+        var root = document.RootElement;
+        if (root.TryGetProperty("hostFile", out var host))
+            links.Add(new RevitLinkInfo
+            (
+                GetString(host, "modelName"),
+                GetStringOrNull(host, "versionId"),
+                true
+            ));
+
+        if (root.TryGetProperty("linkedFiles", out var linkedFiles) &&
+            linkedFiles.TryGetProperty("results", out var results) &&
+            results.ValueKind == JsonValueKind.Array)
+            links.AddRange(
+                from item in results.EnumerateArray() select 
+                    new RevitLinkInfo
+                    (
+                        GetString(host, "modelName"),
+                        GetStringOrNull(host, "versionId"),
+                        true
+                    ));
+        return links;
+    }
+
+    private static string GetString(JsonElement element, string propertyName) =>
+        element.TryGetProperty(propertyName, out var property) && property.ValueKind == JsonValueKind.String ?
+        property.GetString() ?? "" : "";
+
+    private static string? GetStringOrNull(JsonElement element, string propertyName) =>
+        element.TryGetProperty(propertyName, out var property) && property.ValueKind == JsonValueKind.String ?
+        property.GetString() : null;
+
+    public static List<ViewInfo> ReadViews(JsonDocument document)
     {
         List<ViewInfo> views = [];
 
-        if (!metadata.RootElement.TryGetProperty("data", out var data) || !data.TryGetProperty("metadata", out var metadataArray))
+        if (!document.RootElement.TryGetProperty("data", out var data) || !data.TryGetProperty("metadata", out var metadataArray))
             return views;
 
         foreach (var item in metadataArray.EnumerateArray())
@@ -160,4 +205,6 @@ internal static class JsonExtensions
 
         return views;
     }
+
+
 }

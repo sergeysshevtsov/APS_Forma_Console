@@ -4,6 +4,7 @@ using APS_Forma_Console.Cache;
 using APS_Forma_Console.Items;
 using APS_Forma_Console.Models;
 using APS_Forma_Console.Utils;
+using System;
 using System.Text.Json;
 
 namespace APS_Forma_Console.Navigation;
@@ -61,10 +62,27 @@ internal class MenuRenderer(CacheService cacheService, DataManagementService dat
                     break;
                 }
             case 3:
-                break;
+                { //READ LINK THROWS AN INTERNAL SERVER ERROR 500 during response <- WORK WITH AUTODESK SUPPORT
+                    JsonElement element = await dataManagementService.GetLatestVersion(selectedFileCacheInfo?.ProjectId, selectedFileCacheInfo?.ItemId);
+                    string? versionId = JsonExtensions.GetVersionId(element);
+                    //File.WriteAllText("C:\\Temp\\output.json", element.GetRawText());
+                    List<RevitLinkInfo> links = await modelDerivativeService.GetRevitLinks(selectedFileCacheInfo?.ProjectId, Uri.EscapeDataString(versionId));
+                    if (links.Count == 0)
+                        Console.WriteLine("No links found.");
+                    else
+                    {
+                        foreach (RevitLinkInfo link in links)
+                        {
+                            Console.WriteLine($"- {link.Name}");
+                            Console.WriteLine($"  Version: {link.VersionId}");
+                            Console.WriteLine($"  Is host: {link.IsHost}");
+                        }
+                    }
+                    break;
+                }
             case 4:
                 {
-                    MenuExtension.MenuHeader("Model's view list");
+                    MenuExtension.MenuHeader("Model's views list");
                     JsonElement element = await dataManagementService.GetLatestVersion(selectedFileCacheInfo?.ProjectId, selectedFileCacheInfo?.ItemId);
                     string? derivativeUrn = JsonExtensions.GetDerivativeUrn(element);
                     List<ViewInfo> views = await modelDerivativeService.GetModelViews(derivativeUrn);

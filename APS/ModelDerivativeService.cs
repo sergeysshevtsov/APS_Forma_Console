@@ -11,9 +11,15 @@ internal class ModelDerivativeService(AuthService authService)
         return JsonExtensions.FindPropertyRecursive(document.RootElement, "RVTVersion");
     }
 
+    public async Task<List<RevitLinkInfo>> GetRevitLinks(string projectId, string versionId)
+    {
+        using JsonDocument document = await authService.GetJson(Endpoints.PublishedVersion(projectId, versionId));
+        return JsonExtensions.ReadLinks(document);
+    }
+
     public async Task<List<ViewInfo>> GetModelViews(string urn)
     {
-        using JsonDocument metadata = await authService.GetJson(Endpoints.Metadata(urn));
-        return JsonExtensions.ReadViews(metadata);
+        using JsonDocument document = await authService.GetJson(Endpoints.Metadata(urn));
+        return JsonExtensions.ReadViews(document);
     }
 }

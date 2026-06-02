@@ -1,0 +1,1 @@
+﻿internal sealed record RevitLinkInfo(string Name, string? VersionId, bool IsHost);
