@@ -35,5 +35,8 @@ internal class Endpoints
     public static string PublishedVersion(string projectId, string encodedVersionId) =>
         $"https://developer.api.autodesk.com/construction/rcm/v1/projects/{projectId}/published-versions/{encodedVersionId}/linked-files?includeHost=true";
 
+    public static string ModelProperties(string urn, string modelGuid) =>
+        $"https://developer.api.autodesk.com/modelderivative/v2/designdata/{urn}/metadata/{modelGuid}/properties";
+
 
 }

@@ -16,7 +16,8 @@ internal class MenuRenderer(CacheService cacheService, DataManagementService dat
             "Select Revit file from Forma",
             "Show Revit file version",
             "Show model links",
-            "Show model views"
+            "Show model views",
+            "Show model family instances"
         ];
 
     public async Task MainMenu()
@@ -66,7 +67,6 @@ internal class MenuRenderer(CacheService cacheService, DataManagementService dat
                     MenuExtension.MenuHeader("Model's links list");
                     JsonElement element = await dataManagementService.GetLatestVersion(selectedFileCacheInfo?.ProjectId, selectedFileCacheInfo?.ItemId);
                     string? versionId = JsonExtensions.GetVersionId(element);
-                    //File.WriteAllText("C:\\Temp\\output.json", element.GetRawText());
                     List<RevitLinkInfo> links = await modelDerivativeService.GetRevitLinks(selectedFileCacheInfo?.ProjectId, Uri.EscapeDataString(versionId));
                     if (links.Count == 0)
                         Console.WriteLine("No links found.");
@@ -96,6 +96,29 @@ internal class MenuRenderer(CacheService cacheService, DataManagementService dat
                             ConsoleExtension.ConsoleWriteLine($"- {view.Name}", Enums.ConsoleTextType.Success);
                             ConsoleExtension.ConsoleWriteLine($"  Guid: {view.Guid}", Enums.ConsoleTextType.Success);
                             ConsoleExtension.ConsoleWriteLine($"  Role: {view.Role}", Enums.ConsoleTextType.Success);
+                        }
+                    }
+                    break;
+                }
+            case 5:
+                {
+                    MenuExtension.MenuHeader("Model's family instances list");
+                    JsonElement element = await dataManagementService.GetLatestVersion(selectedFileCacheInfo?.ProjectId, selectedFileCacheInfo?.ItemId);
+                    string? derivativeUrn = JsonExtensions.GetDerivativeUrn(element);
+                    string? viewGuid = await modelDerivativeService.GetDefault3DViewGuid(derivativeUrn);
+                    List<FamilyInstanceInfo> familyInstances = await modelDerivativeService.GetModelFamilyInstances(derivativeUrn, viewGuid);
+                    if (familyInstances.Count == 0)
+                        Console.WriteLine("No family instances found.");
+                    else
+                    {
+                        foreach (FamilyInstanceInfo fi in familyInstances)
+                        {
+                            ConsoleExtension.ConsoleWriteLine($"- {fi.Name}", Enums.ConsoleTextType.Success);
+                            ConsoleExtension.ConsoleWriteLine($"  ObjectId: {fi.ObjectId}", Enums.ConsoleTextType.Success);
+                            ConsoleExtension.ConsoleWriteLine($"  Category: {fi.Category}", Enums.ConsoleTextType.Success);
+                            ConsoleExtension.ConsoleWriteLine($"  Family: {fi.Family}", Enums.ConsoleTextType.Success);
+                            ConsoleExtension.ConsoleWriteLine($"  Id: {fi.IdInt}", Enums.ConsoleTextType.Success);
+                            ConsoleExtension.ConsoleWriteLine($"  Host: {fi.Host}", Enums.ConsoleTextType.Success);
                         }
                     }
                     break;

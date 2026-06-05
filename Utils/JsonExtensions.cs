@@ -81,6 +81,28 @@ internal static class JsonExtensions
         throw new InvalidOperationException("Selected file version does not contain a ID. It may not be translated yet.");
     }
 
+    private static string? GetPropertyValue(JsonElement obj, params string[] names)
+    {
+        if (!obj.TryGetProperty("properties", out var props))
+            return null;
+
+        foreach (var group in props.EnumerateObject())
+            foreach (var prop in group.Value.EnumerateObject())
+                if (names.Any(name => prop.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
+                    return ValueToString(prop.Value);
+
+        return null;
+    }
+
+    private static string ValueToString(JsonElement value) => value.ValueKind switch
+    {
+        JsonValueKind.String => value.GetString() ?? "",
+        JsonValueKind.Number => value.ToString(),
+        JsonValueKind.True => "true",
+        JsonValueKind.False => "false",
+        _ => value.ToString()
+    };
+
     public static string GetDerivativeUrn(JsonElement version)
     {
         if (version.TryGetProperty("relationships", out var relationships) &&
@@ -92,6 +114,9 @@ internal static class JsonExtensions
 
         throw new InvalidOperationException("Selected file version does not contain a derivative URN. It may not be translated yet.");
     }
+
+   
+
 
     private static List<T> ReadNamedResources<T>(JsonDocument json, Func<string, string, T> factory)
     {
@@ -193,6 +218,16 @@ internal static class JsonExtensions
         element.TryGetProperty(propertyName, out var property) && property.ValueKind == JsonValueKind.String ?
         property.GetString() : null;
 
+    private static IEnumerable<JsonElement> EnumerateObjects(JsonDocument properties)
+    {
+        if (!properties.RootElement.TryGetProperty("data", out var data) ||
+            !data.TryGetProperty("collection", out var collection))
+            yield break;
+
+        foreach (var obj in collection.EnumerateArray())
+            yield return obj;
+    }
+
     public static List<ViewInfo> ReadViews(JsonDocument document)
     {
         List<ViewInfo> views = [];
@@ -209,5 +244,32 @@ internal static class JsonExtensions
         return views;
     }
 
+    public static List<FamilyInstanceInfo> ReadFamilyInstances(JsonDocument document, int limit = 200)
+    {
+        List<FamilyInstanceInfo> result = [];
 
+        foreach (JsonElement element in EnumerateObjects(document))
+        {
+            string? name = element.TryGetProperty("name", out var n) ? n.GetString() ?? "(unnamed)" : "(unnamed)";
+            var nameData = name.Split(" ");
+            if (nameData.Length == 2 && nameData[1].Contains('['))
+            {
+                long objectId = element.TryGetProperty("objectid", out var id) && id.TryGetInt64(out var parsedId) ? parsedId : 0;
+                element.TryGetProperty("properties", out var properties);
+                
+                properties.TryGetProperty("Identity Data", out var identityData);
+                string typeName = identityData.TryGetProperty("Type Name", out var n1) ? n1.GetString() ?? "(unnamed)" : "(unnamed)";
+                
+                properties.TryGetProperty("Constraints", out var constraints);
+                string host = constraints.TryGetProperty("Host", out var n2) ? n2.GetString() ?? "(unnamed)" : "(unnamed)";
+               
+                result.Add(new FamilyInstanceInfo(objectId, name, "", nameData[0], typeName, nameData[1], host));
+            }
+
+            if (result.Count >= limit)
+                break;
+        }
+
+        return result;
+    }
 }
