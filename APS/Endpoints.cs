@@ -30,6 +30,10 @@ internal class Endpoints
     public static string Metadata(string urn) =>
         $"https://developer.api.autodesk.com/modelderivative/v2/designdata/{urn}/metadata";
 
+    //public static string PublishedVersion(string projectId, string encodedVersionId) =>
+    //     $"https://developer.api.autodesk.com/construction/rcm/v1/projects/{projectId}/published-versions/{encodedVersionId}/linked-files";
     public static string PublishedVersion(string projectId, string encodedVersionId) =>
         $"https://developer.api.autodesk.com/construction/rcm/v1/projects/{projectId}/published-versions/{encodedVersionId}/linked-files?includeHost=true";
+
+
 }

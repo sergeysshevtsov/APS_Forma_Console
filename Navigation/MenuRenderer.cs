@@ -62,7 +62,8 @@ internal class MenuRenderer(CacheService cacheService, DataManagementService dat
                     break;
                 }
             case 3:
-                { //READ LINK THROWS AN INTERNAL SERVER ERROR 500 during response <- WORK WITH AUTODESK SUPPORT
+                {
+                    MenuExtension.MenuHeader("Model's links list");
                     JsonElement element = await dataManagementService.GetLatestVersion(selectedFileCacheInfo?.ProjectId, selectedFileCacheInfo?.ItemId);
                     string? versionId = JsonExtensions.GetVersionId(element);
                     //File.WriteAllText("C:\\Temp\\output.json", element.GetRawText());
@@ -73,9 +74,9 @@ internal class MenuRenderer(CacheService cacheService, DataManagementService dat
                     {
                         foreach (RevitLinkInfo link in links)
                         {
-                            Console.WriteLine($"- {link.Name}");
-                            Console.WriteLine($"  Version: {link.VersionId}");
-                            Console.WriteLine($"  Is host: {link.IsHost}");
+                            ConsoleExtension.ConsoleWriteLine($"- {link.Name}", Enums.ConsoleTextType.Success);
+                            ConsoleExtension.ConsoleWriteLine($"  Version: {link.VersionId}", Enums.ConsoleTextType.Success);
+                            ConsoleExtension.ConsoleWriteLine($"  Is host: {link.IsHost}", Enums.ConsoleTextType.Success);
                         }
                     }
                     break;
@@ -92,9 +93,9 @@ internal class MenuRenderer(CacheService cacheService, DataManagementService dat
                     {
                         foreach (ViewInfo view in views)
                         {
-                            Console.WriteLine($"- {view.Name}");
-                            Console.WriteLine($"  Guid: {view.Guid}");
-                            Console.WriteLine($"  Role: {view.Role}");
+                            ConsoleExtension.ConsoleWriteLine($"- {view.Name}", Enums.ConsoleTextType.Success);
+                            ConsoleExtension.ConsoleWriteLine($"  Guid: {view.Guid}", Enums.ConsoleTextType.Success);
+                            ConsoleExtension.ConsoleWriteLine($"  Role: {view.Role}", Enums.ConsoleTextType.Success);
                         }
                     }
                     break;

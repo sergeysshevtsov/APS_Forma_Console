@@ -7,4 +7,5 @@ internal class APSConfig
     public required List<string> Scopes { get; init; }
     public required string Region { get; init; }
     public string NormalizedCallbackUrl => CallbackUrl.EndsWith('/') ? CallbackUrl : string.Concat(CallbackUrl, "/");
+    public string? UserId {  get; init; }
 }

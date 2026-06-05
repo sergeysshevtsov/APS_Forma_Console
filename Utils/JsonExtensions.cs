@@ -107,11 +107,13 @@ internal static class JsonExtensions
         return result;
     }
 
-    public static async Task<JsonDocument> GetJson(this AuthService authService, string url)
+    public static async Task<JsonDocument> GetJson(this AuthService authService, string url, bool isUserIdUse = false)
     {
         using HttpClient httpClient = new();
         using HttpRequestMessage request = new(HttpMethod.Get, url);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", authService.GetToken());
+        if (isUserIdUse)
+            request.Headers.Add("x-user-id", authService.GetUserId());
 
         using HttpResponseMessage response = await httpClient.SendAsync(request);
         string body = await response.Content.ReadAsStringAsync();
@@ -158,7 +160,6 @@ internal static class JsonExtensions
     public static List<RevitLinkInfo> ReadLinks(JsonDocument document)
     {
         List<RevitLinkInfo> links = [];
-
         var root = document.RootElement;
         if (root.TryGetProperty("hostFile", out var host))
             links.Add(new RevitLinkInfo
@@ -172,13 +173,15 @@ internal static class JsonExtensions
             linkedFiles.TryGetProperty("results", out var results) &&
             results.ValueKind == JsonValueKind.Array)
             links.AddRange(
-                from item in results.EnumerateArray() select 
+                from item in results.EnumerateArray()
+                select
                     new RevitLinkInfo
                     (
                         GetString(host, "modelName"),
                         GetStringOrNull(host, "versionId"),
-                        true
+                        false
                     ));
+
         return links;
     }
 

@@ -49,4 +49,5 @@ internal class AuthService
     }
 
     public string? GetToken() => accessToken;
+    public string? GetUserId() => config.UserId;
 }
