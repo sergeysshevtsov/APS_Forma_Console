@@ -16,7 +16,7 @@ internal class ModelDerivativeService(AuthService authService)
     public async Task<List<RevitLinkInfo>> GetRevitLinks(string projectId, string versionId)
     {
         using JsonDocument document = await authService.GetJson(Endpoints.PublishedVersion(projectId, versionId), true);
-        //File.WriteAllText("C:\\Temp\\links.json", document.RootElement.GetRawText());
+        File.WriteAllText("C:\\Temp\\links.json", document.RootElement.GetRawText());
         return JsonExtensions.ReadLinks(document);
     }
 
@@ -30,7 +30,7 @@ internal class ModelDerivativeService(AuthService authService)
     public async Task<List<FamilyInstanceInfo>> GetModelFamilyInstances(string urn, string viewGuid)
     {
         using JsonDocument document = await authService.GetJson(Endpoints.ModelProperties(urn, viewGuid));
-        File.WriteAllText("C:\\Temp\\familyInstances.json", document.RootElement.GetRawText());
+        //File.WriteAllText("C:\\Temp\\familyInstances.json", document.RootElement.GetRawText());
         return JsonExtensions.ReadFamilyInstances(document);
     }
 

@@ -202,8 +202,8 @@ internal static class JsonExtensions
                 select
                     new RevitLinkInfo
                     (
-                        GetString(host, "modelName"),
-                        GetStringOrNull(host, "versionId"),
+                        GetString(item, "modelName"),
+                        GetStringOrNull(item, "versionId"),
                         false
                     ));
 
