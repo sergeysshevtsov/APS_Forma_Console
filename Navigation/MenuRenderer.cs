@@ -5,7 +5,9 @@ using APS_Forma_Console.Items;
 using APS_Forma_Console.Models;
 using APS_Forma_Console.Utils;
 using System;
+using System.Reflection.Metadata;
 using System.Text.Json;
+using System.Xml.Linq;
 
 namespace APS_Forma_Console.Navigation;
 internal class MenuRenderer(CacheService cacheService, DataManagementService dataManagementService, ModelDerivativeService modelDerivativeService)
@@ -17,7 +19,8 @@ internal class MenuRenderer(CacheService cacheService, DataManagementService dat
             "Show Revit file version",
             "Show model links",
             "Show model views",
-            "Show model family instances"
+            "Show model family instances",
+            "Get Revit Forma file type"
         ];
 
     public async Task MainMenu()
@@ -117,10 +120,19 @@ internal class MenuRenderer(CacheService cacheService, DataManagementService dat
                             ConsoleExtension.ConsoleWriteLine($"  ObjectId: {fi.ObjectId}", Enums.ConsoleTextType.Success);
                             ConsoleExtension.ConsoleWriteLine($"  Category: {fi.Category}", Enums.ConsoleTextType.Success);
                             ConsoleExtension.ConsoleWriteLine($"  Family: {fi.Family}", Enums.ConsoleTextType.Success);
+                            ConsoleExtension.ConsoleWriteLine($"  Type: {fi.Type}", Enums.ConsoleTextType.Success);
                             ConsoleExtension.ConsoleWriteLine($"  Id: {fi.IdInt}", Enums.ConsoleTextType.Success);
                             ConsoleExtension.ConsoleWriteLine($"  Host: {fi.Host}", Enums.ConsoleTextType.Success);
                         }
                     }
+                    break;
+                }
+            case 6:
+                {
+                    MenuExtension.MenuHeader("Revit file Forma type");
+                    JsonElement element = await dataManagementService.GetLatestVersion(selectedFileCacheInfo?.ProjectId, selectedFileCacheInfo?.ItemId);
+                    string type = JsonExtensions.GetType(element);
+                    ConsoleExtension.ConsoleWriteLine(type, Enums.ConsoleTextType.Success);
                     break;
                 }
             case 0:

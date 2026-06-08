@@ -72,6 +72,21 @@ internal static class JsonExtensions
         return "(unnamed)";
     }
 
+    public static string GetType(JsonElement element)
+    {
+        if (element.TryGetProperty("attributes", out var attributes))
+        {
+            if (attributes.TryGetProperty("extension", out var extension))
+            {
+
+                if (extension.TryGetProperty("type", out var type))
+                    return type.GetString() ?? "(unnamed)";
+            }
+        }
+
+        return "(unnamed)";
+    }
+
     public static string GetVersionId(JsonElement version)
     {
         if (version.TryGetProperty("id", out var id))
