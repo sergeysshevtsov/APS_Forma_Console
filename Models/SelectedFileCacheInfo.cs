@@ -14,6 +14,9 @@ internal class SelectedFileCacheInfo
 
         ItemId = string.Empty;
         ItemName = string.Empty;
+
+        ModelGuid = Guid.Empty;
+        ProjectGuid = Guid.Empty;
     }
 
     public string HubId { get; set; }
@@ -24,4 +27,6 @@ internal class SelectedFileCacheInfo
     public string FolderName { get; set; }
     public string ItemId { get; set; }
     public string ItemName { get; set; }
+    public Guid ModelGuid { get; set; }
+    public Guid ProjectGuid { get; set; }
 }

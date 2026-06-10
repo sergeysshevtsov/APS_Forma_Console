@@ -62,6 +62,7 @@ internal class MenuRenderer(CacheService cacheService, DataManagementService dat
                     JsonElement element = await dataManagementService.GetLatestVersion(selectedFileCacheInfo?.ProjectId, selectedFileCacheInfo?.ItemId);
                     string? derivativeUrn = JsonExtensions.GetDerivativeUrn(element);
                     string? version = await modelDerivativeService.GetRevitVersionFromManifest(derivativeUrn) ?? string.Empty;
+                    //File.WriteAllText("C:\\Temp\\file.json", element.GetRawText());
                     ConsoleExtension.ConsoleWriteLine(version, Enums.ConsoleTextType.Success);
                     break;
                 }

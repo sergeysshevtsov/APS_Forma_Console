@@ -134,7 +134,7 @@ internal class SelectRevitFile
 
     private async Task Select(string projectId, FolderEntry selectedItem)
     {
-        var latestVersion = await dataManagementService.GetLatestVersion(projectId, selectedItem.Id);
+        JsonElement latestVersion = await dataManagementService.GetLatestVersion(projectId, selectedItem.Id);
         var derivativeUrn = JsonExtensions.GetDerivativeUrn(latestVersion);
 
         MenuExtension.MenuHeader("Selected Revit file");
@@ -145,6 +145,9 @@ internal class SelectRevitFile
 
         selectedFileCacheInfo.ItemId = selectedItem.Id;
         selectedFileCacheInfo.ItemName = selectedItem.Name;
+
+        selectedFileCacheInfo.ModelGuid = JsonExtensions.GetModelGuid(latestVersion);
+        selectedFileCacheInfo.ProjectGuid = JsonExtensions.GetProjectGuid(latestVersion);
 
         cacheService.WriteCacheFile(selectedFileCacheInfo);
         await menuRenderer.MainMenu();

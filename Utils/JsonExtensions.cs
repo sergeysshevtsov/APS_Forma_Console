@@ -1,10 +1,11 @@
 ﻿using APS_Forma_Console.APS;
 using APS_Forma_Console.Auth;
 using APS_Forma_Console.Models;
+using System;
+using System.Linq;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Linq;
 
 namespace APS_Forma_Console.Utils;
 internal static class JsonExtensions
@@ -44,9 +45,11 @@ internal static class JsonExtensions
 
         foreach (JsonElement item in json.RootElement.GetProperty("data").EnumerateArray())
         {
-            string? id = item.GetProperty("id").GetString() ?? "";
-            string? type = item.GetProperty("type").GetString() ?? "";
+            string? id = item.GetProperty("id").GetString() ?? string.Empty;
+            string? type = item.GetProperty("type").GetString() ?? string.Empty;
             string? name = GetDisplayName(item);
+
+
 
             FolderEntryKind kind = type.Equals("folders", StringComparison.OrdinalIgnoreCase)
                 ? FolderEntryKind.Folder
@@ -85,6 +88,44 @@ internal static class JsonExtensions
         }
 
         return "(unnamed)";
+    }
+
+    public static Guid GetModelGuid(JsonElement element)
+    {
+        if (element.TryGetProperty("attributes", out var attributes))
+        {
+            if (attributes.TryGetProperty("extension", out var extension))
+            {
+
+                if (extension.TryGetProperty("data", out var data))
+                {
+                    if (data.TryGetProperty("modelGuid", out var mg))
+                        return Guid.Parse(mg.GetString() ?? string.Empty);
+
+                }
+            }
+        }
+
+        return Guid.Empty;
+    }
+
+    public static Guid GetProjectGuid(JsonElement element)
+    {
+        if (element.TryGetProperty("attributes", out var attributes))
+        {
+            if (attributes.TryGetProperty("extension", out var extension))
+            {
+
+                if (extension.TryGetProperty("data", out var data))
+                {
+                    if (data.TryGetProperty("projectGuid", out var pg))
+                        return Guid.Parse(pg.GetString() ?? string.Empty);
+
+                }
+            }
+        }
+
+        return Guid.Empty;
     }
 
     public static string GetVersionId(JsonElement version)
@@ -130,7 +171,7 @@ internal static class JsonExtensions
         throw new InvalidOperationException("Selected file version does not contain a derivative URN. It may not be translated yet.");
     }
 
-   
+
 
 
     private static List<T> ReadNamedResources<T>(JsonDocument json, Func<string, string, T> factory)
@@ -271,13 +312,13 @@ internal static class JsonExtensions
             {
                 long objectId = element.TryGetProperty("objectid", out var id) && id.TryGetInt64(out var parsedId) ? parsedId : 0;
                 element.TryGetProperty("properties", out var properties);
-                
+
                 properties.TryGetProperty("Identity Data", out var identityData);
                 string typeName = identityData.TryGetProperty("Type Name", out var n1) ? n1.GetString() ?? "(unnamed)" : "(unnamed)";
-                
+
                 properties.TryGetProperty("Constraints", out var constraints);
                 string host = constraints.TryGetProperty("Host", out var n2) ? n2.GetString() ?? "(unnamed)" : "(unnamed)";
-               
+
                 result.Add(new FamilyInstanceInfo(objectId, name, "", nameData[0], typeName, nameData[1], host));
             }
 
